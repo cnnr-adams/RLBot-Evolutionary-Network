@@ -56,21 +56,42 @@ class NeuralNetwork:
                     neuron.forwardOutput(neuron.getOutput())
         return outputs
 
-    def mutate(self, mutateRate, mutateAmount):
+    def backpropagate(self, inputs, correctOutput, C, lastLoss):
+       # print(lastLoss)
+        W = 0.01
         for index in range(len(self.neurons)):
             for idx in range(len(self.neurons[index])):
                 neuron = self.neurons[index][idx]
                 if index != 0:
+                    neuron.bias += W
+                    der = (self.runMultipleAndCalculateLoss(
+                        inputs, correctOutput) - lastLoss) / W
+                    neuron.bias -= W
+                    neuron.bias = neuron.bias - der * C
+                for connection in neuron.connections:
+                    connection.weight += W
+                    der = (self.runMultipleAndCalculateLoss(
+                        inputs, correctOutput) - lastLoss) / W
+                    connection.weight -= W
+                    connection.weight = connection.weight - der * C
+        return self
+
+    def mutate(self, mutateRate, mutateAmount):
+        for neuron0, index in self.neurons:
+            for neuron in self.neurons[index]:
+                print(neuron)
+              # neuron = self.neurons[index][idx]
+                if index != 0:
                     if random.uniform(0, 1) < mutateRate:
                         neuron.bias += random.uniform(-mutateAmount,
                                                       mutateAmount)
-                        for connection in neuron.connections:
-                            if (random.uniform(0, 1) < mutateRate):
-                                connection.weight += random.uniform(-mutateAmount,
-                                                                    mutateAmount)
+                for connection in neuron.connections:
+                    if (random.uniform(0, 1) < mutateRate):
+                        connection.weight += random.uniform(-mutateAmount,
+                                                            mutateAmount)
         return self
 
-    def runMultipleAndCalculateLoss(self, inputs, correctOutput, C):
+    def runMultipleAndCalculateLoss(self, inputs, correctOutput):
        # print("new")
         loss = 0
         for index in range(len(inputs)):
@@ -78,7 +99,7 @@ class NeuralNetwork:
             for idx in range(len(correctOutput[index])):
               #  print(inputs[index], correctOutput[index][idx], output[idx], C *
                    #   (correctOutput[index][idx] - output[idx]) ** 2)
-                loss += C * (correctOutput[index][idx] - output[idx]) ** 2
+                loss += (correctOutput[index][idx] - output[idx]) ** 2
             loss /= len(correctOutput[index])
         loss /= len(inputs)
         return loss
